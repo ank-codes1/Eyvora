@@ -1,0 +1,14 @@
+{
+  "project": "EYVORA",
+  "version": "V1",
+  "features": [
+    "face detection",
+    "no-face detection",
+    "eye open/closed",
+    "blink counting",
+    "prolonged eye closure",
+    "yawning",
+    "head direction",
+    "SQLite event logging"
+  ]
+}
