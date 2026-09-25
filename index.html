@@ -31,8 +31,8 @@
       cursor: pointer;
     }
 
-    #status {
-      margin-top: 20px;
+    .status {
+      margin-top: 16px;
       font-size: 24px;
       font-weight: bold;
     }
@@ -46,11 +46,17 @@
 
   <button id="startBtn">Start Camera + AI</button>
 
-  <div>
-    <video id="camera" autoplay playsinline></video>
+  <br>
+
+  <video id="camera" autoplay playsinline></video>
+
+  <div class="status" id="driverStatus">
+    Driver: Waiting...
   </div>
 
-  <div id="status">AI Status: Loading...</div>
+  <div class="status" id="eyeStatus">
+    Eyes: --
+  </div>
 
   <script type="module">
 
@@ -63,16 +69,18 @@
     } = vision;
 
     const video = document.getElementById("camera");
-    const status = document.getElementById("status");
+    const driverStatus = document.getElementById("driverStatus");
+    const eyeStatus = document.getElementById("eyeStatus");
     const startBtn = document.getElementById("startBtn");
 
     let faceLandmarker;
     let lastVideoTime = -1;
-    let cameraStarted = false;
+
+    const EYE_CLOSED_THRESHOLD = 0.55;
 
     async function setupAI() {
 
-      status.innerText = "AI Status: Loading MediaPipe...";
+      driverStatus.innerText = "AI: Loading...";
 
       const filesetResolver =
         await FilesetResolver.forVisionTasks(
@@ -90,17 +98,19 @@
 
             runningMode: "VIDEO",
             numFaces: 1,
-            outputFaceBlendshapes: true
+
+            outputFaceBlendshapes: true,
+            outputFacialTransformationMatrixes: true
           }
         );
 
-      status.innerText = "AI Status: Ready";
+      driverStatus.innerText = "AI: Ready";
     }
 
     async function startCamera() {
 
       if (!faceLandmarker) {
-        status.innerText = "AI Status: Still loading...";
+        alert("AI is still loading.");
         return;
       }
 
@@ -114,17 +124,22 @@
 
       video.addEventListener(
         "loadeddata",
-        () => {
-          cameraStarted = true;
-          detectLoop();
-        },
+        detectLoop,
         { once: true }
       );
     }
 
-    function detectLoop() {
+    function getBlendshapeScore(categories, name) {
 
-      if (!cameraStarted) return;
+      const item =
+        categories.find(
+          shape => shape.categoryName === name
+        );
+
+      return item ? item.score : 0;
+    }
+
+    function detectLoop() {
 
       if (
         video.readyState >= 2 &&
@@ -144,14 +159,62 @@
           result.faceLandmarks.length > 0
         ) {
 
-          status.innerText =
+          driverStatus.innerText =
             "Driver: FACE DETECTED";
+
+          if (
+            result.faceBlendshapes &&
+            result.faceBlendshapes.length > 0
+          ) {
+
+            const categories =
+              result.faceBlendshapes[0].categories;
+
+            const leftEye =
+              getBlendshapeScore(
+                categories,
+                "eyeBlinkLeft"
+              );
+
+            const rightEye =
+              getBlendshapeScore(
+                categories,
+                "eyeBlinkRight"
+              );
+
+            const eyeScore =
+              (leftEye + rightEye) / 2;
+
+            if (
+              eyeScore >= EYE_CLOSED_THRESHOLD
+            ) {
+
+              eyeStatus.innerText =
+                "Eyes: CLOSED";
+
+              eyeStatus.style.color =
+                "#ef4444";
+
+            } else {
+
+              eyeStatus.innerText =
+                "Eyes: OPEN";
+
+              eyeStatus.style.color =
+                "#22c55e";
+            }
+          }
 
         } else {
 
-          status.innerText =
+          driverStatus.innerText =
             "Driver: NO FACE";
 
+          eyeStatus.innerText =
+            "Eyes: --";
+
+          eyeStatus.style.color =
+            "white";
         }
       }
 
