@@ -1,34 +1,41 @@
-# EYVORA V1 settings
-#
-# Start with these values. We can calibrate them later for your face/camera.
-
 CAMERA_INDEX = 0
 CAMERA_WIDTH = 1280
 CAMERA_HEIGHT = 720
 
-# MediaPipe blendshape threshold:
-# 0 = open, 1 = strongly closed/blinking.
 EYE_CLOSED_THRESHOLD = 0.55
-
-# If the eyes remain closed this long, EYVORA flags drowsiness.
 DROWSY_SECONDS = 1.50
-
-# A closure within this range counts as a normal blink.
 BLINK_MIN_SECONDS = 0.07
 BLINK_MAX_SECONDS = 0.80
 
-# MediaPipe "jawOpen" threshold and minimum duration for a yawn.
 YAWN_JAW_THRESHOLD = 0.55
 YAWN_MIN_SECONDS = 0.60
 
-# Head direction thresholds after pressing C while looking straight.
 HEAD_YAW_THRESHOLD_DEG = 15.0
 HEAD_PITCH_THRESHOLD_DEG = 12.0
+HEAD_AWAY_ALERT_SECONDS = 2.0
+NO_FACE_ALERT_SECONDS = 1.5
 
-# If LEFT/RIGHT or UP/DOWN is reversed on your camera, change 1.0 to -1.0.
 YAW_SIGN = 1.0
 PITCH_SIGN = 1.0
 
-# No-face and distraction timers.
-NO_FACE_ALERT_SECONDS = 1.5
-HEAD_AWAY_LOG_SECONDS = 2.0
+RISK_DECAY_PER_SECOND = 6.0
+RISK_EYES_CLOSED = 55
+RISK_YAWNING = 18
+RISK_HEAD_AWAY = 25
+RISK_NO_FACE = 40
+RISK_REPEATED_YAWN_BONUS = 12
+
+CAUTION_RISK = 30
+HIGH_RISK = 55
+CRITICAL_RISK = 75
+
+EMERGENCY_COUNTDOWN_SECONDS = 8
+CRITICAL_HOLD_SECONDS = 1.0
+INCIDENT_COOLDOWN_SECONDS = 20
+
+ROLLING_BUFFER_SECONDS = 15
+ROLLING_BUFFER_MAX_FPS = 20
+
+DATABASE_NAME = "eyvora.db"
+INCIDENTS_DIR = "incidents"
+MODEL_DIR = "models"

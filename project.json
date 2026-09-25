@@ -1,14 +1,12 @@
 {
   "project": "EYVORA",
-  "version": "V1",
+  "version": "2.0",
+  "scope": "software-only",
   "features": [
-    "face detection",
-    "no-face detection",
-    "eye open/closed",
-    "blink counting",
-    "prolonged eye closure",
-    "yawning",
-    "head direction",
-    "SQLite event logging"
+    "webcam AI",
+    "risk score",
+    "SQLite",
+    "emergency countdown",
+    "rolling video"
   ]
 }

@@ -1,30 +1,42 @@
-# EYVORA
+# EYVORA V2
 
-AI Driver Monitoring and Emergency Response System.
+Software-only AI Driver Monitoring and Emergency Response prototype.
 
-## Current V1 features
-- Face detection
-- Eye open/closed detection
+## Features
+- Face / no-face detection
+- Eye open / closed detection
 - Blink counting
-- Yawn detection
-- Head direction
 - Drowsiness detection
-- SQLite event logging
+- Yawn detection
+- Head direction / distraction detection
+- Live 0–100 driver risk score
+- SAFE / CAUTION / HIGH / CRITICAL states
+- Driver profile in SQLite
+- Session/event/incident database
+- 8-second "ARE YOU OK?" countdown
+- `I` or `SPACE` to cancel the emergency
+- 15-second rolling video buffer
+- Automatic incident clip if no response
 
-## Planned hardware
-- ESP32
-- MAX30102
-- MLX90640
-- EDA/GSR sensor
-- Pressure sensor
-- Buzzer
-- Cancel button
-- Hazard LEDs
-
-## Setup
+## Python
 Use Python 3.12.
 
-Install dependencies:
+## Dependencies
+```text
+mediapipe==0.10.21
+opencv-contrib-python==4.10.0.84
+numpy==2.5.2
+```
 
+## Run
 ```bash
-pip install -r requirements.txt
+python app.py
+```
+
+Controls:
+- `C` centre head
+- `I` or `SPACE` I'm OK
+- `R` reset risk
+- `Q` quit
+
+This is a school/research prototype, not a medical diagnosis system.
