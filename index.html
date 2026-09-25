@@ -1,234 +1,1845 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>EYVORA</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
+      margin: 0;
       background: #0f172a;
       color: white;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 24px;
     }
 
-    video {
-      width: 700px;
-      max-width: 95%;
-      border-radius: 18px;
-      border: 3px solid #38bdf8;
-      margin-top: 18px;
+    header {
+      padding: 22px;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      font-size: 38px;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 18px;
+      font-weight: normal;
+      color: #94a3b8;
+    }
+
+    .controls {
+      margin: 10px;
+    }
+
+    input {
+      padding: 11px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
     }
 
     button {
-      margin: 12px;
-      padding: 12px 24px;
-      font-size: 16px;
+      padding: 11px 20px;
+      border-radius: 9px;
       border: none;
-      border-radius: 10px;
       cursor: pointer;
+      font-size: 15px;
+      margin: 5px;
     }
 
-    .status {
-      margin-top: 16px;
-      font-size: 24px;
+    #startBtn {
+      background: #38bdf8;
       font-weight: bold;
+    }
+
+    .cameraBox {
+      position: relative;
+      width: 720px;
+      max-width: 95%;
+      margin: auto;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 18px;
+      border: 3px solid #38bdf8;
+      background: black;
+    }
+
+    .dashboard {
+      width: 900px;
+      max-width: 95%;
+      margin: 22px auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 16px;
+      border-radius: 13px;
+    }
+
+    .card small {
+      color: #94a3b8;
+    }
+
+    .value {
+      font-size: 21px;
+      font-weight: bold;
+      margin-top: 7px;
+    }
+
+    #riskNumber {
+      font-size: 34px;
+    }
+
+    #incidentBox {
+      display: none;
+      width: 850px;
+      max-width: 95%;
+      margin: 20px auto;
+      padding: 16px;
+      background: #7f1d1d;
+      border-radius: 12px;
+    }
+
+    #incidentVideoLink {
+      display: none;
+      color: white;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .events {
+      background: #1e293b;
+      width: 850px;
+      max-width: 95%;
+      margin: 20px auto 40px;
+      border-radius: 13px;
+      padding: 16px;
+      text-align: left;
+    }
+
+    .event {
+      padding: 7px;
+      border-bottom: 1px solid #334155;
+      font-size: 14px;
+    }
+
+    #warningOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .warningBox {
+      background: #991b1b;
+      padding: 40px;
+      border-radius: 20px;
+      width: 500px;
+      max-width: 90%;
+    }
+
+    #countdown {
+      font-size: 70px;
+      font-weight: bold;
+      margin: 15px;
+    }
+
+    #okBtn {
+      font-size: 20px;
+      font-weight: bold;
+      padding: 15px 30px;
     }
   </style>
 </head>
 
+
 <body>
 
+<header>
+
   <h1>EYVORA</h1>
-  <h2>AI Driver Monitoring System</h2>
 
-  <button id="startBtn">Start Camera + AI</button>
+  <h2>
+    AI Driver Monitoring & Emergency Response Prototype
+  </h2>
 
-  <br>
+</header>
 
-  <video id="camera" autoplay playsinline></video>
 
-  <div class="status" id="driverStatus">
-    Driver: Waiting...
+<div class="controls">
+
+  <input
+    id="driverName"
+    placeholder="Driver name"
+    value="Driver"
+  >
+
+  <button id="startBtn">
+    Start EYVORA
+  </button>
+
+</div>
+
+
+<div class="cameraBox">
+
+  <video
+    id="camera"
+    autoplay
+    muted
+    playsinline>
+  </video>
+
+</div>
+
+
+<div class="dashboard">
+
+  <div class="card">
+    <small>Driver</small>
+    <div class="value" id="faceStatus">
+      Waiting...
+    </div>
   </div>
 
-  <div class="status" id="eyeStatus">
-    Eyes: --
+
+  <div class="card">
+    <small>Eyes</small>
+    <div class="value" id="eyeStatus">
+      --
+    </div>
+    <small id="eyeScore">Score: --</small>
   </div>
 
-  <script type="module">
 
-    import vision from
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
+  <div class="card">
+    <small>Blinks</small>
+    <div class="value" id="blinkCount">
+      0
+    </div>
+  </div>
 
-    const {
-      FaceLandmarker,
-      FilesetResolver
-    } = vision;
 
-    const video = document.getElementById("camera");
-    const driverStatus = document.getElementById("driverStatus");
-    const eyeStatus = document.getElementById("eyeStatus");
-    const startBtn = document.getElementById("startBtn");
+  <div class="card">
+    <small>Drowsiness</small>
+    <div class="value" id="drowsyStatus">
+      NORMAL
+    </div>
+  </div>
 
-    let faceLandmarker;
-    let lastVideoTime = -1;
 
-    const EYE_CLOSED_THRESHOLD = 0.55;
+  <div class="card">
+    <small>Yawning</small>
+    <div class="value" id="yawnStatus">
+      NO
+    </div>
+    <small id="yawnCount">Yawns: 0</small>
+  </div>
 
-    async function setupAI() {
 
-      driverStatus.innerText = "AI: Loading...";
+  <div class="card">
+    <small>Head Direction</small>
+    <div class="value" id="headStatus">
+      --
+    </div>
+  </div>
 
-      const filesetResolver =
-        await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-        );
 
-      faceLandmarker =
-        await FaceLandmarker.createFromOptions(
-          filesetResolver,
-          {
-            baseOptions: {
-              modelAssetPath:
-                "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-            },
+  <div class="card">
+    <small>Risk Score</small>
+    <div class="value" id="riskNumber">
+      0
+    </div>
+  </div>
 
-            runningMode: "VIDEO",
-            numFaces: 1,
 
-            outputFaceBlendshapes: true,
-            outputFacialTransformationMatrixes: true
-          }
-        );
+  <div class="card">
+    <small>Risk Level</small>
+    <div class="value" id="riskLevel">
+      SAFE
+    </div>
+  </div>
 
-      driverStatus.innerText = "AI: Ready";
-    }
+</div>
 
-    async function startCamera() {
 
-      if (!faceLandmarker) {
-        alert("AI is still loading.");
-        return;
-      }
+<div id="incidentBox">
 
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
-        });
+  <h2>⚠ SIMULATED EMERGENCY RESPONSE</h2>
 
-      video.srcObject = stream;
+  <p>
+    Driver did not respond to the warning.
+  </p>
 
-      video.addEventListener(
-        "loadeddata",
-        detectLoop,
-        { once: true }
+  <p>
+    Incident information has been saved locally.
+  </p>
+
+  <p>
+    Real emergency calling is NOT enabled in this prototype.
+  </p>
+
+  <a
+    id="incidentVideoLink"
+    download>
+    Download incident video
+  </a>
+
+</div>
+
+
+<div class="events">
+
+  <strong>EYVORA Event Log</strong>
+
+  <div id="eventLog"></div>
+
+</div>
+
+
+<div id="warningOverlay">
+
+  <div class="warningBox">
+
+    <h1>ARE YOU OK?</h1>
+
+    <p>
+      EYVORA detected a high-risk driver state.
+    </p>
+
+    <div id="countdown">
+      8
+    </div>
+
+    <button id="okBtn">
+      I'M OK
+    </button>
+
+    <p>
+      Press SPACE or I to confirm.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+<script type="module">
+
+import vision from
+"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
+
+
+const {
+  FaceLandmarker,
+  FilesetResolver
+} = vision;
+
+
+
+/* ==============================
+   DOM
+================================ */
+
+const video =
+  document.getElementById("camera");
+
+const startBtn =
+  document.getElementById("startBtn");
+
+const driverNameInput =
+  document.getElementById("driverName");
+
+const faceStatus =
+  document.getElementById("faceStatus");
+
+const eyeStatus =
+  document.getElementById("eyeStatus");
+
+const eyeScore =
+  document.getElementById("eyeScore");
+
+const blinkCountDisplay =
+  document.getElementById("blinkCount");
+
+const drowsyStatus =
+  document.getElementById("drowsyStatus");
+
+const yawnStatus =
+  document.getElementById("yawnStatus");
+
+const yawnCountDisplay =
+  document.getElementById("yawnCount");
+
+const headStatus =
+  document.getElementById("headStatus");
+
+const riskNumber =
+  document.getElementById("riskNumber");
+
+const riskLevel =
+  document.getElementById("riskLevel");
+
+const warningOverlay =
+  document.getElementById("warningOverlay");
+
+const countdownDisplay =
+  document.getElementById("countdown");
+
+const okBtn =
+  document.getElementById("okBtn");
+
+const incidentBox =
+  document.getElementById("incidentBox");
+
+const incidentVideoLink =
+  document.getElementById("incidentVideoLink");
+
+const eventLog =
+  document.getElementById("eventLog");
+
+
+
+/* ==============================
+   VARIABLES
+================================ */
+
+let faceLandmarker;
+
+let aiReady = false;
+
+let running = false;
+
+let lastVideoTime = -1;
+
+
+let blinkCount = 0;
+
+let eyeClosed = false;
+
+let eyeClosedAt = 0;
+
+let blinkTimes = [];
+
+
+let yawnCount = 0;
+
+let mouthOpenAt = 0;
+
+let yawnActive = false;
+
+
+let headTurnAt = 0;
+
+let previousHeadDirection = "CENTER";
+
+
+let noFaceAt = 0;
+
+let drowsyLogged = false;
+
+
+let warningActive = false;
+
+let warningTimer = null;
+
+let warningCooldownUntil = 0;
+
+
+let recorder = null;
+
+let rollingChunks = [];
+
+let firstVideoChunk = null;
+
+
+let audioContext = null;
+
+
+const EYE_CLOSED_THRESHOLD = 0.55;
+
+const DROWSY_SECONDS = 1.5;
+
+const YAWN_THRESHOLD = 0.55;
+
+const YAWN_SECONDS = 0.8;
+
+
+
+/* ==============================
+   EVENT DATABASE
+================================ */
+
+let events = JSON.parse(
+  localStorage.getItem("eyvora_events") || "[]"
+);
+
+
+function logEvent(type, message) {
+
+  const event = {
+    time: new Date().toLocaleString(),
+    driver:
+      driverNameInput.value || "Driver",
+    type,
+    message
+  };
+
+  events.unshift(event);
+
+  events = events.slice(0, 100);
+
+  localStorage.setItem(
+    "eyvora_events",
+    JSON.stringify(events)
+  );
+
+  renderEvents();
+}
+
+
+function renderEvents() {
+
+  eventLog.innerHTML = "";
+
+  events.slice(0, 10).forEach(event => {
+
+    const div =
+      document.createElement("div");
+
+    div.className = "event";
+
+    div.textContent =
+      `${event.time} | ${event.type} | ${event.message}`;
+
+    eventLog.appendChild(div);
+
+  });
+
+}
+
+
+renderEvents();
+
+
+
+/* ==============================
+   LOAD MEDIAPIPE AI
+================================ */
+
+async function setupAI() {
+
+  try {
+
+    faceStatus.innerText =
+      "Loading AI...";
+
+    const fileset =
+      await FilesetResolver.forVisionTasks(
+
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+
       );
-    }
 
-    function getBlendshapeScore(categories, name) {
 
-      const item =
-        categories.find(
-          shape => shape.categoryName === name
-        );
+    faceLandmarker =
+      await FaceLandmarker.createFromOptions(
 
-      return item ? item.score : 0;
-    }
+        fileset,
 
-    function detectLoop() {
+        {
 
-      if (
-        video.readyState >= 2 &&
-        video.currentTime !== lastVideoTime
-      ) {
+          baseOptions: {
 
-        lastVideoTime = video.currentTime;
+            modelAssetPath:
 
-        const result =
-          faceLandmarker.detectForVideo(
-            video,
-            performance.now()
-          );
+              "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 
-        if (
-          result.faceLandmarks &&
-          result.faceLandmarks.length > 0
-        ) {
+          },
 
-          driverStatus.innerText =
-            "Driver: FACE DETECTED";
 
-          if (
-            result.faceBlendshapes &&
-            result.faceBlendshapes.length > 0
-          ) {
+          runningMode: "VIDEO",
 
-            const categories =
-              result.faceBlendshapes[0].categories;
+          numFaces: 1,
 
-            const leftEye =
-              getBlendshapeScore(
-                categories,
-                "eyeBlinkLeft"
-              );
+          outputFaceBlendshapes: true
 
-            const rightEye =
-              getBlendshapeScore(
-                categories,
-                "eyeBlinkRight"
-              );
-
-            const eyeScore =
-              (leftEye + rightEye) / 2;
-
-            if (
-              eyeScore >= EYE_CLOSED_THRESHOLD
-            ) {
-
-              eyeStatus.innerText =
-                "Eyes: CLOSED";
-
-              eyeStatus.style.color =
-                "#ef4444";
-
-            } else {
-
-              eyeStatus.innerText =
-                "Eyes: OPEN";
-
-              eyeStatus.style.color =
-                "#22c55e";
-            }
-          }
-
-        } else {
-
-          driverStatus.innerText =
-            "Driver: NO FACE";
-
-          eyeStatus.innerText =
-            "Eyes: --";
-
-          eyeStatus.style.color =
-            "white";
         }
-      }
 
-      requestAnimationFrame(detectLoop);
-    }
+      );
 
-    startBtn.addEventListener(
-      "click",
-      startCamera
+
+    aiReady = true;
+
+    faceStatus.innerText =
+      "AI READY";
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    faceStatus.innerText =
+      "AI LOAD ERROR";
+
+  }
+
+}
+
+
+setupAI();
+
+
+
+/* ==============================
+   CAMERA
+================================ */
+
+async function startEYVORA() {
+
+  if (!aiReady) {
+
+    alert(
+      "AI is still loading. Wait a few seconds."
     );
 
-    setupAI();
+    return;
 
-  </script>
+  }
+
+
+  try {
+
+    audioContext =
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+
+    const stream =
+      await navigator.mediaDevices
+        .getUserMedia({
+
+          video: {
+            facingMode: "user"
+          },
+
+          audio: false
+
+        });
+
+
+    video.srcObject = stream;
+
+    await video.play();
+
+
+    startRollingRecorder(stream);
+
+
+    running = true;
+
+    startBtn.disabled = true;
+
+    startBtn.innerText =
+      "EYVORA RUNNING";
+
+
+    logEvent(
+      "SESSION",
+      "Driver monitoring started"
+    );
+
+
+    requestAnimationFrame(
+      detectLoop
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Camera could not start."
+    );
+
+  }
+
+}
+
+
+
+startBtn.addEventListener(
+  "click",
+  startEYVORA
+);
+
+
+
+/* ==============================
+   BLENDSHAPE SCORE
+================================ */
+
+function getScore(
+  categories,
+  name
+) {
+
+  const item =
+    categories.find(
+      x => x.categoryName === name
+    );
+
+  return item
+    ? item.score
+    : 0;
+
+}
+
+
+
+/* ==============================
+   HEAD DIRECTION
+================================ */
+
+function getHeadDirection(points) {
+
+  const leftFace =
+    points[234];
+
+  const rightFace =
+    points[454];
+
+  const nose =
+    points[1];
+
+
+  const faceWidth =
+    Math.abs(
+      rightFace.x -
+      leftFace.x
+    );
+
+
+  if (faceWidth === 0)
+    return "CENTER";
+
+
+  const centre =
+    (
+      leftFace.x +
+      rightFace.x
+    ) / 2;
+
+
+  const offset =
+    (
+      nose.x -
+      centre
+    ) /
+    faceWidth;
+
+
+  if (offset > 0.06)
+    return "RIGHT";
+
+
+  if (offset < -0.06)
+    return "LEFT";
+
+
+  return "CENTER";
+
+}
+
+
+
+/* ==============================
+   DETECTION LOOP
+================================ */
+
+function detectLoop() {
+
+  if (!running)
+    return;
+
+
+  const now =
+    performance.now();
+
+
+  if (
+
+    video.readyState >= 2 &&
+
+    video.currentTime !==
+      lastVideoTime
+
+  ) {
+
+    lastVideoTime =
+      video.currentTime;
+
+
+    const result =
+      faceLandmarker
+        .detectForVideo(
+
+          video,
+
+          now
+
+        );
+
+
+    const faceDetected =
+
+      result.faceLandmarks &&
+
+      result.faceLandmarks.length > 0;
+
+
+    if (!faceDetected) {
+
+      handleNoFace(now);
+
+    } else {
+
+      handleFace(
+        result,
+        now
+      );
+
+    }
+
+  }
+
+
+  requestAnimationFrame(
+    detectLoop
+  );
+
+}
+
+
+
+/* ==============================
+   NO FACE
+================================ */
+
+function handleNoFace(now) {
+
+  faceStatus.innerText =
+    "NO FACE";
+
+  eyeStatus.innerText =
+    "--";
+
+  drowsyStatus.innerText =
+    "--";
+
+  yawnStatus.innerText =
+    "--";
+
+  headStatus.innerText =
+    "--";
+
+
+  if (!noFaceAt) {
+
+    noFaceAt = now;
+
+    logEvent(
+      "FACE",
+      "Driver face lost"
+    );
+
+  }
+
+
+  const noFaceSeconds =
+    (now - noFaceAt) / 1000;
+
+
+  let risk = 0;
+
+
+  if (noFaceSeconds > 2.5) {
+
+    risk = 80;
+
+  } else if (
+    noFaceSeconds > 0.8
+  ) {
+
+    risk = 35;
+
+  }
+
+
+  updateRisk(risk);
+
+}
+
+
+
+/* ==============================
+   FACE FOUND
+================================ */
+
+function handleFace(
+  result,
+  now
+) {
+
+  if (noFaceAt) {
+
+    logEvent(
+      "FACE",
+      "Driver face detected again"
+    );
+
+  }
+
+
+  noFaceAt = 0;
+
+
+  faceStatus.innerText =
+    "FACE DETECTED";
+
+
+  const points =
+    result.faceLandmarks[0];
+
+
+  const blendshapes =
+    result.faceBlendshapes;
+
+
+  if (
+    !blendshapes ||
+    blendshapes.length === 0
+  ) {
+
+    return;
+
+  }
+
+
+  const categories =
+    blendshapes[0].categories;
+
+
+
+  /* ==========================
+     EYE DETECTION
+  ========================== */
+
+  const leftBlink =
+    getScore(
+      categories,
+      "eyeBlinkLeft"
+    );
+
+
+  const rightBlink =
+    getScore(
+      categories,
+      "eyeBlinkRight"
+    );
+
+
+  const blinkScore =
+    (
+      leftBlink +
+      rightBlink
+    ) / 2;
+
+
+  eyeScore.innerText =
+    "Closure score: " +
+    blinkScore.toFixed(2);
+
+
+  const closed =
+    blinkScore >
+    EYE_CLOSED_THRESHOLD;
+
+
+  let closedSeconds = 0;
+
+
+  if (closed) {
+
+    eyeStatus.innerText =
+      "CLOSED";
+
+    eyeStatus.style.color =
+      "#ef4444";
+
+
+    if (!eyeClosed) {
+
+      eyeClosed = true;
+
+      eyeClosedAt = now;
+
+    }
+
+
+    closedSeconds =
+      (
+        now -
+        eyeClosedAt
+      ) / 1000;
+
+  }
+
+
+  else {
+
+    eyeStatus.innerText =
+      "OPEN";
+
+    eyeStatus.style.color =
+      "#22c55e";
+
+
+    if (eyeClosed) {
+
+      const duration =
+        now -
+        eyeClosedAt;
+
+
+      if (
+        duration > 60 &&
+        duration < 700
+      ) {
+
+        blinkCount++;
+
+        blinkCountDisplay.innerText =
+          blinkCount;
+
+
+        blinkTimes.push(
+          Date.now()
+        );
+
+      }
+
+
+      eyeClosed = false;
+
+      eyeClosedAt = 0;
+
+    }
+
+  }
+
+
+
+  /* ==========================
+     DROWSINESS
+  ========================== */
+
+  const isDrowsy =
+    closedSeconds >=
+    DROWSY_SECONDS;
+
+
+  if (isDrowsy) {
+
+    drowsyStatus.innerText =
+      "DROWSY";
+
+    drowsyStatus.style.color =
+      "#ef4444";
+
+
+    if (!drowsyLogged) {
+
+      logEvent(
+        "DROWSINESS",
+        "Long eye closure detected"
+      );
+
+      drowsyLogged = true;
+
+    }
+
+  }
+
+
+  else {
+
+    drowsyStatus.innerText =
+      "NORMAL";
+
+    drowsyStatus.style.color =
+      "#22c55e";
+
+
+    drowsyLogged = false;
+
+  }
+
+
+
+  /* ==========================
+     YAWN
+  ========================== */
+
+  const jawOpen =
+    getScore(
+      categories,
+      "jawOpen"
+    );
+
+
+  if (
+    jawOpen >
+    YAWN_THRESHOLD
+  ) {
+
+    if (!mouthOpenAt) {
+
+      mouthOpenAt = now;
+
+    }
+
+
+    const openSeconds =
+      (
+        now -
+        mouthOpenAt
+      ) / 1000;
+
+
+    if (
+      openSeconds >
+        YAWN_SECONDS &&
+
+      !yawnActive
+    ) {
+
+      yawnActive = true;
+
+      yawnCount++;
+
+      yawnCountDisplay.innerText =
+        "Yawns: " +
+        yawnCount;
+
+
+      logEvent(
+        "YAWN",
+        "Yawning detected"
+      );
+
+    }
+
+  }
+
+
+  else {
+
+    mouthOpenAt = 0;
+
+    yawnActive = false;
+
+  }
+
+
+  if (yawnActive) {
+
+    yawnStatus.innerText =
+      "YAWN";
+
+    yawnStatus.style.color =
+      "#f59e0b";
+
+  } else {
+
+    yawnStatus.innerText =
+      "NO";
+
+    yawnStatus.style.color =
+      "#22c55e";
+
+  }
+
+
+
+  /* ==========================
+     HEAD DIRECTION
+  ========================== */
+
+  const direction =
+    getHeadDirection(points);
+
+
+  headStatus.innerText =
+    direction;
+
+
+  if (
+    direction !== "CENTER"
+  ) {
+
+    if (
+      previousHeadDirection !==
+      direction
+    ) {
+
+      headTurnAt = now;
+
+    }
+
+
+    if (!headTurnAt) {
+
+      headTurnAt = now;
+
+    }
+
+  }
+
+
+  else {
+
+    headTurnAt = 0;
+
+  }
+
+
+  previousHeadDirection =
+    direction;
+
+
+  let headTurnSeconds = 0;
+
+
+  if (headTurnAt) {
+
+    headTurnSeconds =
+      (
+        now -
+        headTurnAt
+      ) / 1000;
+
+  }
+
+
+
+  /* ==========================
+     BLINK RATE
+  ========================== */
+
+  blinkTimes =
+    blinkTimes.filter(
+
+      t =>
+        Date.now() - t <
+        60000
+
+    );
+
+
+  const blinkRate =
+    blinkTimes.length;
+
+
+
+  /* ==========================
+     RISK ENGINE
+  ========================== */
+
+  let risk = 0;
+
+
+  if (
+    closedSeconds >
+    1.5
+  ) {
+
+    risk += 85;
+
+  }
+
+
+  else if (
+    closedSeconds >
+    0.6
+  ) {
+
+    risk += 45;
+
+  }
+
+
+  if (yawnActive) {
+
+    risk += 20;
+
+  }
+
+
+  if (
+    headTurnSeconds > 4
+  ) {
+
+    risk += 60;
+
+  }
+
+
+  else if (
+    headTurnSeconds > 2
+  ) {
+
+    risk += 30;
+
+  }
+
+
+  if (
+    blinkRate > 25
+  ) {
+
+    risk += 10;
+
+  }
+
+
+  risk =
+    Math.min(
+      100,
+      risk
+    );
+
+
+  updateRisk(risk);
+
+}
+
+
+
+/* ==============================
+   RISK DISPLAY
+================================ */
+
+function updateRisk(score) {
+
+  score =
+    Math.round(score);
+
+
+  riskNumber.innerText =
+    score;
+
+
+  let level;
+
+
+  if (score < 25) {
+
+    level = "SAFE";
+
+    riskLevel.style.color =
+      "#22c55e";
+
+  }
+
+
+  else if (score < 50) {
+
+    level =
+      "CAUTION";
+
+    riskLevel.style.color =
+      "#facc15";
+
+  }
+
+
+  else if (score < 75) {
+
+    level =
+      "HIGH";
+
+    riskLevel.style.color =
+      "#f97316";
+
+  }
+
+
+  else {
+
+    level =
+      "CRITICAL";
+
+    riskLevel.style.color =
+      "#ef4444";
+
+  }
+
+
+  riskLevel.innerText =
+    level;
+
+
+  if (
+    level === "CRITICAL" &&
+    !warningActive &&
+    Date.now() >
+      warningCooldownUntil
+  ) {
+
+    startWarning();
+
+  }
+
+}
+
+
+
+/* ==============================
+   WARNING SYSTEM
+================================ */
+
+function startWarning() {
+
+  warningActive = true;
+
+  warningOverlay.style.display =
+    "flex";
+
+
+  let seconds = 8;
+
+
+  countdownDisplay.innerText =
+    seconds;
+
+
+  beep();
+
+
+  logEvent(
+    "WARNING",
+    "Critical risk warning activated"
+  );
+
+
+  warningTimer =
+    setInterval(() => {
+
+      seconds--;
+
+      countdownDisplay.innerText =
+        seconds;
+
+
+      beep();
+
+
+      if (seconds <= 0) {
+
+        clearInterval(
+          warningTimer
+        );
+
+
+        triggerIncident();
+
+      }
+
+    }, 1000);
+
+}
+
+
+
+/* ==============================
+   DRIVER RESPONSE
+================================ */
+
+function acknowledgeWarning() {
+
+  if (!warningActive)
+    return;
+
+
+  clearInterval(
+    warningTimer
+  );
+
+
+  warningActive = false;
+
+
+  warningOverlay.style.display =
+    "none";
+
+
+  warningCooldownUntil =
+    Date.now() +
+    15000;
+
+
+  logEvent(
+    "DRIVER RESPONSE",
+    "Driver confirmed they are OK"
+  );
+
+}
+
+
+
+okBtn.addEventListener(
+  "click",
+  acknowledgeWarning
+);
+
+
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (!warningActive)
+      return;
+
+
+    if (
+      event.code === "Space" ||
+      event.key.toLowerCase() === "i"
+    ) {
+
+      event.preventDefault();
+
+      acknowledgeWarning();
+
+    }
+
+  }
+);
+
+
+
+/* ==============================
+   SIMULATED INCIDENT
+================================ */
+
+function triggerIncident() {
+
+  warningActive = false;
+
+  warningOverlay.style.display =
+    "none";
+
+
+  warningCooldownUntil =
+    Date.now() +
+    30000;
+
+
+  incidentBox.style.display =
+    "block";
+
+
+  beep();
+  beep();
+
+
+  logEvent(
+    "INCIDENT",
+    "No response from driver - simulated emergency triggered"
+  );
+
+
+  createIncidentVideo();
+
+}
+
+
+
+/* ==============================
+   SOUND
+================================ */
+
+function beep() {
+
+  if (!audioContext)
+    return;
+
+
+  const oscillator =
+    audioContext.createOscillator();
+
+
+  const gain =
+    audioContext.createGain();
+
+
+  oscillator.connect(gain);
+
+  gain.connect(
+    audioContext.destination
+  );
+
+
+  oscillator.frequency.value =
+    850;
+
+
+  gain.gain.value =
+    0.08;
+
+
+  oscillator.start();
+
+
+  oscillator.stop(
+    audioContext.currentTime +
+    0.15
+  );
+
+}
+
+
+
+/* ==============================
+   15 SECOND VIDEO BUFFER
+================================ */
+
+function startRollingRecorder(
+  stream
+) {
+
+  if (
+    !window.MediaRecorder
+  ) {
+
+    console.log(
+      "MediaRecorder unavailable"
+    );
+
+    return;
+
+  }
+
+
+  const formats = [
+
+    "video/webm;codecs=vp9",
+
+    "video/webm;codecs=vp8",
+
+    "video/webm",
+
+    "video/mp4"
+
+  ];
+
+
+  let mimeType = "";
+
+
+  for (
+    const format of formats
+  ) {
+
+    if (
+      MediaRecorder
+        .isTypeSupported(format)
+    ) {
+
+      mimeType = format;
+
+      break;
+
+    }
+
+  }
+
+
+  try {
+
+    recorder =
+      mimeType
+
+        ? new MediaRecorder(
+            stream,
+            { mimeType }
+          )
+
+        : new MediaRecorder(
+            stream
+          );
+
+
+    recorder.ondataavailable =
+      event => {
+
+        if (
+          !event.data ||
+          event.data.size === 0
+        ) {
+
+          return;
+
+        }
+
+
+        if (!firstVideoChunk) {
+
+          firstVideoChunk =
+            event.data;
+
+        }
+
+
+        rollingChunks.push({
+
+          data: event.data,
+
+          time: Date.now()
+
+        });
+
+
+        const cutoff =
+          Date.now() -
+          16000;
+
+
+        rollingChunks =
+          rollingChunks.filter(
+
+            chunk =>
+              chunk.time >=
+              cutoff
+
+          );
+
+      };
+
+
+    recorder.start(1000);
+
+
+  } catch (error) {
+
+    console.error(
+      "Recorder error:",
+      error
+    );
+
+  }
+
+}
+
+
+
+/* ==============================
+   CREATE INCIDENT VIDEO
+================================ */
+
+function createIncidentVideo() {
+
+  if (
+    !recorder ||
+    rollingChunks.length === 0
+  ) {
+
+    return;
+
+  }
+
+
+  const chunks =
+    rollingChunks.map(
+      x => x.data
+    );
+
+
+  if (
+    firstVideoChunk &&
+    chunks[0] !==
+      firstVideoChunk
+  ) {
+
+    chunks.unshift(
+      firstVideoChunk
+    );
+
+  }
+
+
+  const type =
+    recorder.mimeType ||
+    "video/webm";
+
+
+  const blob =
+    new Blob(
+      chunks,
+      { type }
+    );
+
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  const extension =
+    type.includes("mp4")
+      ? "mp4"
+      : "webm";
+
+
+  incidentVideoLink.href =
+    url;
+
+
+  incidentVideoLink.download =
+    "EYVORA_incident_" +
+    Date.now() +
+    "." +
+    extension;
+
+
+  incidentVideoLink.style.display =
+    "inline-block";
+
+}
+
+</script>
 
 </body>
 </html>
