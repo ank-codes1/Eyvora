@@ -4,12 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EYVORA</title>
+
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+
+    video {
+      width: 700px;
+      max-width: 95%;
+      border-radius: 18px;
+      border: 3px solid #38bdf8;
+      margin-top: 20px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
+
   <h1>EYVORA</h1>
   <h2>AI Driver Monitoring System</h2>
 
-  <p>Browser version is working.</p>
+  <button onclick="startCamera()">Start Camera</button>
+
+  <br>
+
+  <video id="camera" autoplay playsinline></video>
+
+  <script>
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+
+        document.getElementById("camera").srcObject = stream;
+
+      } catch (error) {
+        alert("Camera access failed: " + error);
+      }
+    }
+  </script>
+
 </body>
 </html>
