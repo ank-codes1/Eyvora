@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>EYVORA</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -19,9 +16,7 @@
       text-align: center;
     }
 
-    header {
-      padding: 22px;
-    }
+    header { padding: 20px; }
 
     h1 {
       margin-bottom: 5px;
@@ -30,54 +25,42 @@
 
     h2 {
       margin-top: 0;
+      color: #94a3b8;
       font-size: 18px;
       font-weight: normal;
-      color: #94a3b8;
     }
 
-    .controls {
-      margin: 10px;
-    }
-
-    input {
-      padding: 11px;
-      border-radius: 8px;
-      border: none;
-      font-size: 15px;
-    }
-
-    button {
-      padding: 11px 20px;
-      border-radius: 9px;
-      border: none;
-      cursor: pointer;
-      font-size: 15px;
+    input, button {
+      padding: 11px 18px;
       margin: 5px;
+      border: none;
+      border-radius: 9px;
+      font-size: 15px;
     }
+
+    button { cursor: pointer; }
 
     #startBtn {
       background: #38bdf8;
       font-weight: bold;
     }
 
-    .cameraBox {
-      position: relative;
-      width: 720px;
-      max-width: 95%;
-      margin: auto;
+    #calibrateBtn {
+      background: #a78bfa;
     }
 
     video {
-      width: 100%;
-      border-radius: 18px;
+      width: 720px;
+      max-width: 95%;
       border: 3px solid #38bdf8;
+      border-radius: 18px;
       background: black;
     }
 
     .dashboard {
-      width: 900px;
+      width: 950px;
       max-width: 95%;
-      margin: 22px auto;
+      margin: 20px auto;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px;
@@ -85,22 +68,28 @@
 
     .card {
       background: #1e293b;
-      padding: 16px;
+      padding: 15px;
       border-radius: 13px;
     }
 
-    .card small {
-      color: #94a3b8;
-    }
+    .card small { color: #94a3b8; }
 
     .value {
-      font-size: 21px;
+      font-size: 20px;
       font-weight: bold;
       margin-top: 7px;
     }
 
-    #riskNumber {
-      font-size: 34px;
+    #riskNumber { font-size: 32px; }
+
+    #calibrationBox {
+      display: none;
+      width: 850px;
+      max-width: 95%;
+      margin: 15px auto;
+      background: #312e81;
+      padding: 14px;
+      border-radius: 12px;
     }
 
     #incidentBox {
@@ -108,8 +97,8 @@
       width: 850px;
       max-width: 95%;
       margin: 20px auto;
-      padding: 16px;
       background: #7f1d1d;
+      padding: 16px;
       border-radius: 12px;
     }
 
@@ -117,14 +106,13 @@
       display: none;
       color: white;
       font-weight: bold;
-      margin-top: 10px;
     }
 
     .events {
-      background: #1e293b;
       width: 850px;
       max-width: 95%;
       margin: 20px auto 40px;
+      background: #1e293b;
       border-radius: 13px;
       padding: 16px;
       text-align: left;
@@ -133,14 +121,14 @@
     .event {
       padding: 7px;
       border-bottom: 1px solid #334155;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     #warningOverlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.88);
+      background: rgba(0,0,0,.9);
       z-index: 999;
       align-items: center;
       justify-content: center;
@@ -157,7 +145,6 @@
     #countdown {
       font-size: 70px;
       font-weight: bold;
-      margin: 15px;
     }
 
     #okBtn {
@@ -168,184 +155,132 @@
   </style>
 </head>
 
-
 <body>
 
 <header>
-
   <h1>EYVORA</h1>
-
-  <h2>
-    AI Driver Monitoring & Emergency Response Prototype
-  </h2>
-
+  <h2>AI Driver Monitoring & Emergency Response Prototype</h2>
 </header>
 
-
-<div class="controls">
-
-  <input
-    id="driverName"
-    placeholder="Driver name"
-    value="Driver"
-  >
-
-  <button id="startBtn">
-    Start EYVORA
-  </button>
-
+<div>
+  <input id="driverName" placeholder="Driver name">
+  <button id="startBtn">Start EYVORA</button>
+  <button id="calibrateBtn">Recalibrate Baseline</button>
 </div>
 
-
-<div class="cameraBox">
-
-  <video
-    id="camera"
-    autoplay
-    muted
-    playsinline>
-  </video>
-
+<div id="calibrationBox">
+  <strong>PERSONAL BASELINE CALIBRATION</strong>
+  <p id="calibrationText">
+    Look normally at the screen, blink naturally and behave normally.
+  </p>
 </div>
 
+<br>
+
+<video id="camera" autoplay muted playsinline></video>
 
 <div class="dashboard">
 
   <div class="card">
-    <small>Driver</small>
-    <div class="value" id="faceStatus">
-      Waiting...
-    </div>
+    <small>Driver Profile</small>
+    <div class="value" id="profileStatus">--</div>
   </div>
 
+  <div class="card">
+    <small>Baseline</small>
+    <div class="value" id="baselineStatus">--</div>
+  </div>
+
+  <div class="card">
+    <small>Face</small>
+    <div class="value" id="faceStatus">Waiting...</div>
+  </div>
 
   <div class="card">
     <small>Eyes</small>
-    <div class="value" id="eyeStatus">
-      --
-    </div>
+    <div class="value" id="eyeStatus">--</div>
     <small id="eyeScore">Score: --</small>
   </div>
 
-
   <div class="card">
     <small>Blinks</small>
-    <div class="value" id="blinkCount">
-      0
-    </div>
+    <div class="value" id="blinkCount">0</div>
   </div>
 
+  <div class="card">
+    <small>Current Blink Rate</small>
+    <div class="value" id="blinkRate">0/min</div>
+  </div>
 
   <div class="card">
     <small>Drowsiness</small>
-    <div class="value" id="drowsyStatus">
-      NORMAL
-    </div>
+    <div class="value" id="drowsyStatus">NORMAL</div>
   </div>
-
 
   <div class="card">
     <small>Yawning</small>
-    <div class="value" id="yawnStatus">
-      NO
-    </div>
+    <div class="value" id="yawnStatus">NO</div>
     <small id="yawnCount">Yawns: 0</small>
   </div>
 
-
   <div class="card">
     <small>Head Direction</small>
-    <div class="value" id="headStatus">
-      --
-    </div>
+    <div class="value" id="headStatus">--</div>
   </div>
-
 
   <div class="card">
     <small>Risk Score</small>
-    <div class="value" id="riskNumber">
-      0
-    </div>
+    <div class="value" id="riskNumber">0</div>
   </div>
-
 
   <div class="card">
     <small>Risk Level</small>
-    <div class="value" id="riskLevel">
-      SAFE
-    </div>
+    <div class="value" id="riskLevel">SAFE</div>
+  </div>
+
+  <div class="card">
+    <small>Sessions</small>
+    <div class="value" id="sessionCount">0</div>
   </div>
 
 </div>
 
-
 <div id="incidentBox">
-
   <h2>⚠ SIMULATED EMERGENCY RESPONSE</h2>
+  <p>Driver did not respond.</p>
+  <p>Incident information has been stored locally.</p>
+  <p>No real emergency service is contacted.</p>
 
-  <p>
-    Driver did not respond to the warning.
-  </p>
-
-  <p>
-    Incident information has been saved locally.
-  </p>
-
-  <p>
-    Real emergency calling is NOT enabled in this prototype.
-  </p>
-
-  <a
-    id="incidentVideoLink"
-    download>
-    Download incident video
+  <a id="incidentVideoLink" download>
+    Download Incident Video
   </a>
-
 </div>
-
 
 <div class="events">
-
   <strong>EYVORA Event Log</strong>
-
   <div id="eventLog"></div>
-
 </div>
 
-
 <div id="warningOverlay">
-
   <div class="warningBox">
 
     <h1>ARE YOU OK?</h1>
 
-    <p>
-      EYVORA detected a high-risk driver state.
-    </p>
+    <p>EYVORA detected a high-risk driver state.</p>
 
-    <div id="countdown">
-      8
-    </div>
+    <div id="countdown">8</div>
 
-    <button id="okBtn">
-      I'M OK
-    </button>
+    <button id="okBtn">I'M OK</button>
 
-    <p>
-      Press SPACE or I to confirm.
-    </p>
+    <p>Press SPACE or I</p>
 
   </div>
-
 </div>
-
-
 
 <script type="module">
 
 import vision from
 "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
-
 
 const {
   FaceLandmarker,
@@ -353,163 +288,288 @@ const {
 } = vision;
 
 
+/* ELEMENTS */
 
-/* ==============================
-   DOM
-================================ */
+const $ = id => document.getElementById(id);
 
-const video =
-  document.getElementById("camera");
+const video = $("camera");
 
-const startBtn =
-  document.getElementById("startBtn");
+const driverNameInput = $("driverName");
 
-const driverNameInput =
-  document.getElementById("driverName");
+const startBtn = $("startBtn");
+const calibrateBtn = $("calibrateBtn");
 
-const faceStatus =
-  document.getElementById("faceStatus");
+const profileStatus = $("profileStatus");
+const baselineStatus = $("baselineStatus");
+const sessionCount = $("sessionCount");
 
-const eyeStatus =
-  document.getElementById("eyeStatus");
+const faceStatus = $("faceStatus");
+const eyeStatus = $("eyeStatus");
+const eyeScore = $("eyeScore");
 
-const eyeScore =
-  document.getElementById("eyeScore");
+const blinkCountDisplay = $("blinkCount");
+const blinkRateDisplay = $("blinkRate");
 
-const blinkCountDisplay =
-  document.getElementById("blinkCount");
+const drowsyStatus = $("drowsyStatus");
 
-const drowsyStatus =
-  document.getElementById("drowsyStatus");
+const yawnStatus = $("yawnStatus");
+const yawnCountDisplay = $("yawnCount");
 
-const yawnStatus =
-  document.getElementById("yawnStatus");
+const headStatus = $("headStatus");
 
-const yawnCountDisplay =
-  document.getElementById("yawnCount");
+const riskNumber = $("riskNumber");
+const riskLevel = $("riskLevel");
 
-const headStatus =
-  document.getElementById("headStatus");
+const calibrationBox = $("calibrationBox");
+const calibrationText = $("calibrationText");
 
-const riskNumber =
-  document.getElementById("riskNumber");
+const warningOverlay = $("warningOverlay");
+const countdownDisplay = $("countdown");
+const okBtn = $("okBtn");
 
-const riskLevel =
-  document.getElementById("riskLevel");
+const incidentBox = $("incidentBox");
+const incidentVideoLink = $("incidentVideoLink");
 
-const warningOverlay =
-  document.getElementById("warningOverlay");
-
-const countdownDisplay =
-  document.getElementById("countdown");
-
-const okBtn =
-  document.getElementById("okBtn");
-
-const incidentBox =
-  document.getElementById("incidentBox");
-
-const incidentVideoLink =
-  document.getElementById("incidentVideoLink");
-
-const eventLog =
-  document.getElementById("eventLog");
+const eventLog = $("eventLog");
 
 
-
-/* ==============================
-   VARIABLES
-================================ */
+/* AI */
 
 let faceLandmarker;
 
 let aiReady = false;
-
 let running = false;
-
 let lastVideoTime = -1;
 
 
-let blinkCount = 0;
+/* DRIVER */
+
+let activeProfile = null;
+
+
+/* EYES */
 
 let eyeClosed = false;
-
 let eyeClosedAt = 0;
 
+let blinkCount = 0;
 let blinkTimes = [];
-
-
-let yawnCount = 0;
-
-let mouthOpenAt = 0;
-
-let yawnActive = false;
-
-
-let headTurnAt = 0;
-
-let previousHeadDirection = "CENTER";
-
-
-let noFaceAt = 0;
 
 let drowsyLogged = false;
 
 
+/* YAWN */
+
+let yawnCount = 0;
+let yawnTimes = [];
+
+let mouthOpenAt = 0;
+let yawnActive = false;
+
+
+/* HEAD */
+
+let headTurnAt = 0;
+let previousHeadDirection = "CENTER";
+
+
+/* FACE */
+
+let noFaceAt = 0;
+
+
+/* WARNING */
+
 let warningActive = false;
-
 let warningTimer = null;
-
 let warningCooldownUntil = 0;
 
 
-let recorder = null;
+/* VIDEO */
 
+let recorder = null;
 let rollingChunks = [];
 
-let firstVideoChunk = null;
+
+/* AUDIO */
+
+let audioContext;
 
 
-let audioContext = null;
+/* CALIBRATION */
+
+let calibrating = false;
+let calibrationStart = 0;
+
+const CALIBRATION_TIME = 30000;
+
+let calEyeSum = 0;
+let calEyeSamples = 0;
+
+let calBlinks = 0;
+let calYawns = 0;
+
+let calFaceFrames = 0;
+let calHeadAwayFrames = 0;
 
 
-const EYE_CLOSED_THRESHOLD = 0.55;
+/* STORAGE */
 
-const DROWSY_SECONDS = 1.5;
-
-const YAWN_THRESHOLD = 0.55;
-
-const YAWN_SECONDS = 0.8;
+const PROFILE_KEY = "eyvora_profiles";
+const EVENT_KEY = "eyvora_events";
 
 
+function loadProfiles() {
+  return JSON.parse(
+    localStorage.getItem(PROFILE_KEY) || "{}"
+  );
+}
 
-/* ==============================
-   EVENT DATABASE
-================================ */
+
+function saveProfiles(profiles) {
+  localStorage.setItem(
+    PROFILE_KEY,
+    JSON.stringify(profiles)
+  );
+}
+
+
+function profileID(name) {
+  return (
+    name.trim().toLowerCase() ||
+    "driver"
+  );
+}
+
+
+function getProfile(name) {
+
+  const profiles = loadProfiles();
+
+  const id = profileID(name);
+
+
+  if (!profiles[id]) {
+
+    profiles[id] = {
+
+      name: name || "Driver",
+
+      sessions: 0,
+
+      baselineSamples: 0,
+
+      baselineBlinkRate: 0,
+
+      baselineEyeClosure: 0,
+
+      baselineYawnsPerMinute: 0,
+
+      baselineHeadAwayRatio: 0,
+
+      updated: null
+
+    };
+
+    saveProfiles(profiles);
+
+  }
+
+
+  return profiles[id];
+}
+
+
+function saveActiveProfile() {
+
+  if (!activeProfile)
+    return;
+
+  const profiles = loadProfiles();
+
+  profiles[
+    profileID(activeProfile.name)
+  ] = activeProfile;
+
+  saveProfiles(profiles);
+
+  displayProfile();
+}
+
+
+function displayProfile() {
+
+  if (!activeProfile)
+    return;
+
+  profileStatus.innerText =
+    activeProfile.name;
+
+  sessionCount.innerText =
+    activeProfile.sessions;
+
+
+  if (
+    activeProfile.baselineSamples > 0
+  ) {
+
+    baselineStatus.innerText =
+      "PERSONALISED";
+
+    baselineStatus.style.color =
+      "#22c55e";
+
+  }
+
+  else {
+
+    baselineStatus.innerText =
+      "NOT LEARNED";
+
+    baselineStatus.style.color =
+      "#facc15";
+
+  }
+
+}
+
+
+/* EVENTS */
 
 let events = JSON.parse(
-  localStorage.getItem("eyvora_events") || "[]"
+  localStorage.getItem(EVENT_KEY) ||
+  "[]"
 );
 
 
 function logEvent(type, message) {
 
-  const event = {
-    time: new Date().toLocaleString(),
+  events.unshift({
+
+    time:
+      new Date().toLocaleString(),
+
     driver:
-      driverNameInput.value || "Driver",
+      activeProfile
+        ? activeProfile.name
+        : "Driver",
+
     type,
+
     message
-  };
 
-  events.unshift(event);
+  });
 
-  events = events.slice(0, 100);
+
+  events =
+    events.slice(0, 100);
+
 
   localStorage.setItem(
-    "eyvora_events",
+    EVENT_KEY,
     JSON.stringify(events)
   );
+
 
   renderEvents();
 }
@@ -519,19 +579,22 @@ function renderEvents() {
 
   eventLog.innerHTML = "";
 
-  events.slice(0, 10).forEach(event => {
 
-    const div =
-      document.createElement("div");
+  events
+    .slice(0, 10)
+    .forEach(event => {
 
-    div.className = "event";
+      const div =
+        document.createElement("div");
 
-    div.textContent =
-      `${event.time} | ${event.type} | ${event.message}`;
+      div.className = "event";
 
-    eventLog.appendChild(div);
+      div.textContent =
+        `${event.time} | ${event.driver} | ${event.type} | ${event.message}`;
 
-  });
+      eventLog.appendChild(div);
+
+    });
 
 }
 
@@ -539,10 +602,7 @@ function renderEvents() {
 renderEvents();
 
 
-
-/* ==============================
-   LOAD MEDIAPIPE AI
-================================ */
+/* MEDIAPIPE */
 
 async function setupAI() {
 
@@ -551,39 +611,43 @@ async function setupAI() {
     faceStatus.innerText =
       "Loading AI...";
 
+
     const fileset =
-      await FilesetResolver.forVisionTasks(
+      await FilesetResolver
+        .forVisionTasks(
 
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
 
-      );
+        );
 
 
     faceLandmarker =
-      await FaceLandmarker.createFromOptions(
+      await FaceLandmarker
+        .createFromOptions(
 
-        fileset,
+          fileset,
 
-        {
+          {
 
-          baseOptions: {
+            baseOptions: {
 
-            modelAssetPath:
+              modelAssetPath:
 
               "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 
-          },
+            },
 
+            runningMode:
+              "VIDEO",
 
-          runningMode: "VIDEO",
+            numFaces: 1,
 
-          numFaces: 1,
+            outputFaceBlendshapes:
+              true
 
-          outputFaceBlendshapes: true
+          }
 
-        }
-
-      );
+        );
 
 
     aiReady = true;
@@ -591,13 +655,14 @@ async function setupAI() {
     faceStatus.innerText =
       "AI READY";
 
+  }
 
-  } catch (error) {
+  catch(error) {
 
     console.error(error);
 
     faceStatus.innerText =
-      "AI LOAD ERROR";
+      "AI ERROR";
 
   }
 
@@ -607,22 +672,37 @@ async function setupAI() {
 setupAI();
 
 
-
-/* ==============================
-   CAMERA
-================================ */
+/* START */
 
 async function startEYVORA() {
 
   if (!aiReady) {
 
     alert(
-      "AI is still loading. Wait a few seconds."
+      "AI is still loading."
     );
 
     return;
 
   }
+
+
+  const name =
+    driverNameInput.value.trim() ||
+    "Driver";
+
+
+  activeProfile =
+    getProfile(name);
+
+
+  activeProfile.sessions++;
+
+  saveActiveProfile();
+
+
+  driverNameInput.disabled =
+    true;
 
 
   try {
@@ -638,26 +718,31 @@ async function startEYVORA() {
       await navigator.mediaDevices
         .getUserMedia({
 
-          video: {
-            facingMode: "user"
-          },
+          video: true,
 
           audio: false
 
         });
 
 
-    video.srcObject = stream;
+    video.srcObject =
+      stream;
+
 
     await video.play();
 
 
-    startRollingRecorder(stream);
+    startRollingRecorder(
+      stream
+    );
 
 
     running = true;
 
-    startBtn.disabled = true;
+
+    startBtn.disabled =
+      true;
+
 
     startBtn.innerText =
       "EYVORA RUNNING";
@@ -665,16 +750,26 @@ async function startEYVORA() {
 
     logEvent(
       "SESSION",
-      "Driver monitoring started"
+      "Monitoring started"
     );
+
+
+    if (
+      activeProfile.baselineSamples === 0
+    ) {
+
+      startCalibration();
+
+    }
 
 
     requestAnimationFrame(
       detectLoop
     );
 
+  }
 
-  } catch (error) {
+  catch(error) {
 
     console.error(error);
 
@@ -687,17 +782,171 @@ async function startEYVORA() {
 }
 
 
-
 startBtn.addEventListener(
   "click",
   startEYVORA
 );
 
 
+/* CALIBRATION */
 
-/* ==============================
-   BLENDSHAPE SCORE
-================================ */
+function startCalibration() {
+
+  if (!running)
+    return;
+
+
+  calibrating = true;
+
+  calibrationStart =
+    performance.now();
+
+
+  calEyeSum = 0;
+  calEyeSamples = 0;
+
+  calBlinks = 0;
+  calYawns = 0;
+
+  calFaceFrames = 0;
+  calHeadAwayFrames = 0;
+
+
+  calibrationBox.style.display =
+    "block";
+
+
+  baselineStatus.innerText =
+    "CALIBRATING";
+
+
+  baselineStatus.style.color =
+    "#a78bfa";
+
+
+  logEvent(
+    "BASELINE",
+    "Personal baseline calibration started"
+  );
+
+}
+
+
+calibrateBtn.addEventListener(
+  "click",
+  () => {
+
+    if (!running) {
+
+      alert(
+        "Start EYVORA first."
+      );
+
+      return;
+
+    }
+
+    startCalibration();
+
+  }
+);
+
+
+function updateCalibration(now) {
+
+  if (!calibrating)
+    return;
+
+
+  const elapsed =
+    now - calibrationStart;
+
+
+  const secondsLeft =
+    Math.max(
+      0,
+      Math.ceil(
+        (CALIBRATION_TIME - elapsed) /
+        1000
+      )
+    );
+
+
+  calibrationText.innerText =
+    "Stay natural. Calibration: " +
+    secondsLeft +
+    " seconds remaining";
+
+
+  if (
+    elapsed >=
+    CALIBRATION_TIME
+  ) {
+
+    finishCalibration(now);
+
+  }
+
+}
+
+
+function finishCalibration(now) {
+
+  calibrating = false;
+
+
+  calibrationBox.style.display =
+    "none";
+
+
+  const minutes =
+    (now - calibrationStart) /
+    60000;
+
+
+  activeProfile.baselineBlinkRate =
+    calBlinks /
+    Math.max(minutes, 0.1);
+
+
+  activeProfile.baselineEyeClosure =
+    calEyeSamples
+      ? calEyeSum /
+        calEyeSamples
+      : 0;
+
+
+  activeProfile.baselineYawnsPerMinute =
+    calYawns /
+    Math.max(minutes, 0.1);
+
+
+  activeProfile.baselineHeadAwayRatio =
+    calFaceFrames
+      ? calHeadAwayFrames /
+        calFaceFrames
+      : 0;
+
+
+  activeProfile.baselineSamples++;
+
+
+  activeProfile.updated =
+    new Date().toISOString();
+
+
+  saveActiveProfile();
+
+
+  logEvent(
+    "BASELINE",
+    "Personal driver baseline learned"
+  );
+
+}
+
+
+/* BLENDSHAPES */
 
 function getScore(
   categories,
@@ -706,8 +955,10 @@ function getScore(
 
   const item =
     categories.find(
-      x => x.categoryName === name
+      x =>
+        x.categoryName === name
     );
+
 
   return item
     ? item.score
@@ -716,38 +967,37 @@ function getScore(
 }
 
 
+/* HEAD */
 
-/* ==============================
-   HEAD DIRECTION
-================================ */
+function getHeadDirection(
+  points
+) {
 
-function getHeadDirection(points) {
-
-  const leftFace =
+  const left =
     points[234];
 
-  const rightFace =
+  const right =
     points[454];
 
   const nose =
     points[1];
 
 
-  const faceWidth =
+  const width =
     Math.abs(
-      rightFace.x -
-      leftFace.x
+      right.x -
+      left.x
     );
 
 
-  if (faceWidth === 0)
+  if (!width)
     return "CENTER";
 
 
   const centre =
     (
-      leftFace.x +
-      rightFace.x
+      left.x +
+      right.x
     ) / 2;
 
 
@@ -756,7 +1006,7 @@ function getHeadDirection(points) {
       nose.x -
       centre
     ) /
-    faceWidth;
+    width;
 
 
   if (offset > 0.06)
@@ -772,10 +1022,7 @@ function getHeadDirection(points) {
 }
 
 
-
-/* ==============================
-   DETECTION LOOP
-================================ */
+/* DETECTION */
 
 function detectLoop() {
 
@@ -792,7 +1039,7 @@ function detectLoop() {
     video.readyState >= 2 &&
 
     video.currentTime !==
-      lastVideoTime
+    lastVideoTime
 
   ) {
 
@@ -811,18 +1058,13 @@ function detectLoop() {
         );
 
 
-    const faceDetected =
+    if (
 
       result.faceLandmarks &&
 
-      result.faceLandmarks.length > 0;
+      result.faceLandmarks.length
 
-
-    if (!faceDetected) {
-
-      handleNoFace(now);
-
-    } else {
+    ) {
 
       handleFace(
         result,
@@ -831,7 +1073,16 @@ function detectLoop() {
 
     }
 
+    else {
+
+      handleNoFace(now);
+
+    }
+
   }
+
+
+  updateCalibration(now);
 
 
   requestAnimationFrame(
@@ -841,24 +1092,17 @@ function detectLoop() {
 }
 
 
-
-/* ==============================
-   NO FACE
-================================ */
+/* NO FACE */
 
 function handleNoFace(now) {
 
   faceStatus.innerText =
     "NO FACE";
 
+
   eyeStatus.innerText =
     "--";
 
-  drowsyStatus.innerText =
-    "--";
-
-  yawnStatus.innerText =
-    "--";
 
   headStatus.innerText =
     "--";
@@ -876,24 +1120,19 @@ function handleNoFace(now) {
   }
 
 
-  const noFaceSeconds =
-    (now - noFaceAt) / 1000;
+  const seconds =
+    (now - noFaceAt) /
+    1000;
 
 
   let risk = 0;
 
 
-  if (noFaceSeconds > 2.5) {
-
+  if (seconds > 2.5)
     risk = 80;
 
-  } else if (
-    noFaceSeconds > 0.8
-  ) {
-
+  else if (seconds > 0.8)
     risk = 35;
-
-  }
 
 
   updateRisk(risk);
@@ -901,25 +1140,12 @@ function handleNoFace(now) {
 }
 
 
-
-/* ==============================
-   FACE FOUND
-================================ */
+/* FACE */
 
 function handleFace(
   result,
   now
 ) {
-
-  if (noFaceAt) {
-
-    logEvent(
-      "FACE",
-      "Driver face detected again"
-    );
-
-  }
-
 
   noFaceAt = 0;
 
@@ -932,28 +1158,22 @@ function handleFace(
     result.faceLandmarks[0];
 
 
-  const blendshapes =
-    result.faceBlendshapes;
-
-
   if (
-    !blendshapes ||
-    blendshapes.length === 0
-  ) {
 
-    return;
+    !result.faceBlendshapes ||
 
-  }
+    !result.faceBlendshapes.length
+
+  ) return;
 
 
   const categories =
-    blendshapes[0].categories;
+    result
+      .faceBlendshapes[0]
+      .categories;
 
 
-
-  /* ==========================
-     EYE DETECTION
-  ========================== */
+  /* EYES */
 
   const leftBlink =
     getScore(
@@ -969,7 +1189,7 @@ function handleFace(
     );
 
 
-  const blinkScore =
+  const closureScore =
     (
       leftBlink +
       rightBlink
@@ -977,13 +1197,55 @@ function handleFace(
 
 
   eyeScore.innerText =
-    "Closure score: " +
-    blinkScore.toFixed(2);
+    "Closure: " +
+    closureScore.toFixed(2);
+
+
+  if (calibrating) {
+
+    calEyeSum +=
+      closureScore;
+
+    calEyeSamples++;
+
+  }
+
+
+  let eyeThreshold =
+    0.55;
+
+
+  if (
+
+    activeProfile &&
+
+    activeProfile.baselineSamples > 0
+
+  ) {
+
+    eyeThreshold =
+      Math.min(
+
+        0.72,
+
+        Math.max(
+
+          0.48,
+
+          activeProfile
+            .baselineEyeClosure +
+          0.35
+
+        )
+
+      );
+
+  }
 
 
   const closed =
-    blinkScore >
-    EYE_CLOSED_THRESHOLD;
+    closureScore >
+    eyeThreshold;
 
 
   let closedSeconds = 0;
@@ -1011,10 +1273,10 @@ function handleFace(
       (
         now -
         eyeClosedAt
-      ) / 1000;
+      ) /
+      1000;
 
   }
-
 
   else {
 
@@ -1039,6 +1301,7 @@ function handleFace(
 
         blinkCount++;
 
+
         blinkCountDisplay.innerText =
           blinkCount;
 
@@ -1046,6 +1309,10 @@ function handleFace(
         blinkTimes.push(
           Date.now()
         );
+
+
+        if (calibrating)
+          calBlinks++;
 
       }
 
@@ -1059,14 +1326,11 @@ function handleFace(
   }
 
 
-
-  /* ==========================
-     DROWSINESS
-  ========================== */
+  /* DROWSINESS */
 
   const isDrowsy =
     closedSeconds >=
-    DROWSY_SECONDS;
+    1.5;
 
 
   if (isDrowsy) {
@@ -1082,7 +1346,7 @@ function handleFace(
 
       logEvent(
         "DROWSINESS",
-        "Long eye closure detected"
+        "Long eye closure"
       );
 
       drowsyLogged = true;
@@ -1090,7 +1354,6 @@ function handleFace(
     }
 
   }
-
 
   else {
 
@@ -1106,10 +1369,7 @@ function handleFace(
   }
 
 
-
-  /* ==========================
-     YAWN
-  ========================== */
+  /* YAWN */
 
   const jawOpen =
     getScore(
@@ -1118,114 +1378,120 @@ function handleFace(
     );
 
 
-  if (
-    jawOpen >
-    YAWN_THRESHOLD
-  ) {
+  if (jawOpen > 0.55) {
 
-    if (!mouthOpenAt) {
-
+    if (!mouthOpenAt)
       mouthOpenAt = now;
-
-    }
-
-
-    const openSeconds =
-      (
-        now -
-        mouthOpenAt
-      ) / 1000;
 
 
     if (
-      openSeconds >
-        YAWN_SECONDS &&
+
+      (
+        now -
+        mouthOpenAt
+      ) /
+      1000 >
+      0.8 &&
 
       !yawnActive
+
     ) {
 
       yawnActive = true;
 
       yawnCount++;
 
+
+      yawnTimes.push(
+        Date.now()
+      );
+
+
       yawnCountDisplay.innerText =
         "Yawns: " +
         yawnCount;
 
 
+      if (calibrating)
+        calYawns++;
+
+
       logEvent(
         "YAWN",
-        "Yawning detected"
+        "Yawn detected"
       );
 
     }
 
   }
 
-
   else {
 
     mouthOpenAt = 0;
-
     yawnActive = false;
 
   }
 
 
-  if (yawnActive) {
-
-    yawnStatus.innerText =
-      "YAWN";
-
-    yawnStatus.style.color =
-      "#f59e0b";
-
-  } else {
-
-    yawnStatus.innerText =
-      "NO";
-
-    yawnStatus.style.color =
-      "#22c55e";
-
-  }
+  yawnStatus.innerText =
+    yawnActive
+      ? "YAWN"
+      : "NO";
 
 
+  yawnStatus.style.color =
+    yawnActive
+      ? "#f59e0b"
+      : "#22c55e";
 
-  /* ==========================
-     HEAD DIRECTION
-  ========================== */
+
+  /* HEAD */
 
   const direction =
-    getHeadDirection(points);
+    getHeadDirection(
+      points
+    );
 
 
   headStatus.innerText =
     direction;
 
 
+  if (calibrating) {
+
+    calFaceFrames++;
+
+    if (
+      direction !==
+      "CENTER"
+    ) {
+
+      calHeadAwayFrames++;
+
+    }
+
+  }
+
+
   if (
-    direction !== "CENTER"
+    direction !==
+    "CENTER"
   ) {
 
     if (
+
       previousHeadDirection !==
-      direction
+      direction ||
+
+      !headTurnAt
+
     ) {
 
       headTurnAt = now;
 
     }
 
-
-    if (!headTurnAt) {
-
-      headTurnAt = now;
-
-    }
-
   }
-
 
   else {
 
@@ -1238,97 +1504,120 @@ function handleFace(
     direction;
 
 
-  let headTurnSeconds = 0;
+  const headSeconds =
+    headTurnAt
+      ? (
+          now -
+          headTurnAt
+        ) /
+        1000
+      : 0;
 
 
-  if (headTurnAt) {
-
-    headTurnSeconds =
-      (
-        now -
-        headTurnAt
-      ) / 1000;
-
-  }
-
-
-
-  /* ==========================
-     BLINK RATE
-  ========================== */
+  /* CURRENT RATES */
 
   blinkTimes =
     blinkTimes.filter(
 
-      t =>
-        Date.now() - t <
+      x =>
+        Date.now() - x <
         60000
 
     );
 
 
-  const blinkRate =
+  yawnTimes =
+    yawnTimes.filter(
+
+      x =>
+        Date.now() - x <
+        60000
+
+    );
+
+
+  const currentBlinkRate =
     blinkTimes.length;
 
 
+  const currentYawns =
+    yawnTimes.length;
 
-  /* ==========================
-     RISK ENGINE
-  ========================== */
+
+  blinkRateDisplay.innerText =
+    currentBlinkRate +
+    "/min";
+
+
+  /* RISK */
 
   let risk = 0;
 
 
-  if (
-    closedSeconds >
-    1.5
-  ) {
-
+  if (closedSeconds > 1.5)
     risk += 85;
 
-  }
-
-
   else if (
-    closedSeconds >
-    0.6
-  ) {
-
+    closedSeconds > 0.6
+  )
     risk += 45;
 
-  }
 
-
-  if (yawnActive) {
-
+  if (yawnActive)
     risk += 20;
 
-  }
 
-
-  if (
-    headTurnSeconds > 4
-  ) {
-
+  if (headSeconds > 4)
     risk += 60;
 
-  }
-
-
   else if (
-    headTurnSeconds > 2
-  ) {
-
+    headSeconds > 2
+  )
     risk += 30;
 
-  }
 
+  /* PERSONAL BASELINE */
 
   if (
-    blinkRate > 25
+
+    activeProfile &&
+
+    activeProfile.baselineSamples > 0
+
   ) {
 
-    risk += 10;
+    const baselineBlink =
+      activeProfile
+        .baselineBlinkRate;
+
+
+    if (
+
+      baselineBlink > 0 &&
+
+      currentBlinkRate >
+      baselineBlink * 1.8 + 4
+
+    ) {
+
+      risk += 10;
+
+    }
+
+
+    if (
+
+      currentYawns >
+
+      activeProfile
+        .baselineYawnsPerMinute +
+      2
+
+    ) {
+
+      risk += 10;
+
+    }
 
   }
 
@@ -1345,10 +1634,7 @@ function handleFace(
 }
 
 
-
-/* ==============================
-   RISK DISPLAY
-================================ */
+/* RISK */
 
 function updateRisk(score) {
 
@@ -1366,40 +1652,30 @@ function updateRisk(score) {
   if (score < 25) {
 
     level = "SAFE";
-
     riskLevel.style.color =
       "#22c55e";
 
   }
 
-
   else if (score < 50) {
 
-    level =
-      "CAUTION";
-
+    level = "CAUTION";
     riskLevel.style.color =
       "#facc15";
 
   }
 
-
   else if (score < 75) {
 
-    level =
-      "HIGH";
-
+    level = "HIGH";
     riskLevel.style.color =
       "#f97316";
 
   }
 
-
   else {
 
-    level =
-      "CRITICAL";
-
+    level = "CRITICAL";
     riskLevel.style.color =
       "#ef4444";
 
@@ -1411,10 +1687,16 @@ function updateRisk(score) {
 
 
   if (
+
     level === "CRITICAL" &&
+
     !warningActive &&
+
+    !calibrating &&
+
     Date.now() >
-      warningCooldownUntil
+    warningCooldownUntil
+
   ) {
 
     startWarning();
@@ -1424,14 +1706,12 @@ function updateRisk(score) {
 }
 
 
-
-/* ==============================
-   WARNING SYSTEM
-================================ */
+/* WARNING */
 
 function startWarning() {
 
   warningActive = true;
+
 
   warningOverlay.style.display =
     "flex";
@@ -1449,7 +1729,7 @@ function startWarning() {
 
   logEvent(
     "WARNING",
-    "Critical risk warning activated"
+    "Critical risk warning"
   );
 
 
@@ -1457,6 +1737,7 @@ function startWarning() {
     setInterval(() => {
 
       seconds--;
+
 
       countdownDisplay.innerText =
         seconds;
@@ -1471,7 +1752,6 @@ function startWarning() {
           warningTimer
         );
 
-
         triggerIncident();
 
       }
@@ -1480,11 +1760,6 @@ function startWarning() {
 
 }
 
-
-
-/* ==============================
-   DRIVER RESPONSE
-================================ */
 
 function acknowledgeWarning() {
 
@@ -1510,19 +1785,17 @@ function acknowledgeWarning() {
 
 
   logEvent(
-    "DRIVER RESPONSE",
-    "Driver confirmed they are OK"
+    "RESPONSE",
+    "Driver confirmed OK"
   );
 
 }
-
 
 
 okBtn.addEventListener(
   "click",
   acknowledgeWarning
 );
-
 
 
 document.addEventListener(
@@ -1534,8 +1807,12 @@ document.addEventListener(
 
 
     if (
+
       event.code === "Space" ||
-      event.key.toLowerCase() === "i"
+
+      event.key.toLowerCase() ===
+      "i"
+
     ) {
 
       event.preventDefault();
@@ -1548,14 +1825,12 @@ document.addEventListener(
 );
 
 
-
-/* ==============================
-   SIMULATED INCIDENT
-================================ */
+/* INCIDENT */
 
 function triggerIncident() {
 
   warningActive = false;
+
 
   warningOverlay.style.display =
     "none";
@@ -1570,13 +1845,9 @@ function triggerIncident() {
     "block";
 
 
-  beep();
-  beep();
-
-
   logEvent(
     "INCIDENT",
-    "No response from driver - simulated emergency triggered"
+    "No driver response - simulated emergency"
   );
 
 
@@ -1585,10 +1856,7 @@ function triggerIncident() {
 }
 
 
-
-/* ==============================
-   SOUND
-================================ */
+/* SOUND */
 
 function beep() {
 
@@ -1597,11 +1865,13 @@ function beep() {
 
 
   const oscillator =
-    audioContext.createOscillator();
+    audioContext
+      .createOscillator();
 
 
   const gain =
-    audioContext.createGain();
+    audioContext
+      .createGain();
 
 
   oscillator.connect(gain);
@@ -1630,31 +1900,17 @@ function beep() {
 }
 
 
-
-/* ==============================
-   15 SECOND VIDEO BUFFER
-================================ */
+/* VIDEO BUFFER */
 
 function startRollingRecorder(
   stream
 ) {
 
-  if (
-    !window.MediaRecorder
-  ) {
-
-    console.log(
-      "MediaRecorder unavailable"
-    );
-
+  if (!window.MediaRecorder)
     return;
 
-  }
 
-
-  const formats = [
-
-    "video/webm;codecs=vp9",
+  const types = [
 
     "video/webm;codecs=vp8",
 
@@ -1665,20 +1921,19 @@ function startRollingRecorder(
   ];
 
 
-  let mimeType = "";
+  let type = "";
 
 
   for (
-    const format of formats
+    const item of types
   ) {
 
     if (
       MediaRecorder
-        .isTypeSupported(format)
+        .isTypeSupported(item)
     ) {
 
-      mimeType = format;
-
+      type = item;
       break;
 
     }
@@ -1689,37 +1944,23 @@ function startRollingRecorder(
   try {
 
     recorder =
-      mimeType
+      type
 
-        ? new MediaRecorder(
-            stream,
-            { mimeType }
-          )
+      ? new MediaRecorder(
+          stream,
+          { mimeType: type }
+        )
 
-        : new MediaRecorder(
-            stream
-          );
+      : new MediaRecorder(
+          stream
+        );
 
 
     recorder.ondataavailable =
       event => {
 
-        if (
-          !event.data ||
-          event.data.size === 0
-        ) {
-
+        if (!event.data.size)
           return;
-
-        }
-
-
-        if (!firstVideoChunk) {
-
-          firstVideoChunk =
-            event.data;
-
-        }
 
 
         rollingChunks.push({
@@ -1731,17 +1972,13 @@ function startRollingRecorder(
         });
 
 
-        const cutoff =
-          Date.now() -
-          16000;
-
-
         rollingChunks =
           rollingChunks.filter(
 
-            chunk =>
-              chunk.time >=
-              cutoff
+            item =>
+              Date.now() -
+              item.time <
+              16000
 
           );
 
@@ -1750,53 +1987,24 @@ function startRollingRecorder(
 
     recorder.start(1000);
 
+  }
 
-  } catch (error) {
+  catch(error) {
 
-    console.error(
-      "Recorder error:",
-      error
-    );
+    console.error(error);
 
   }
 
 }
 
 
-
-/* ==============================
-   CREATE INCIDENT VIDEO
-================================ */
-
 function createIncidentVideo() {
 
   if (
     !recorder ||
-    rollingChunks.length === 0
-  ) {
-
+    !rollingChunks.length
+  )
     return;
-
-  }
-
-
-  const chunks =
-    rollingChunks.map(
-      x => x.data
-    );
-
-
-  if (
-    firstVideoChunk &&
-    chunks[0] !==
-      firstVideoChunk
-  ) {
-
-    chunks.unshift(
-      firstVideoChunk
-    );
-
-  }
 
 
   const type =
@@ -1806,8 +2014,13 @@ function createIncidentVideo() {
 
   const blob =
     new Blob(
-      chunks,
+
+      rollingChunks.map(
+        item => item.data
+      ),
+
       { type }
+
     );
 
 
@@ -1817,12 +2030,6 @@ function createIncidentVideo() {
     );
 
 
-  const extension =
-    type.includes("mp4")
-      ? "mp4"
-      : "webm";
-
-
   incidentVideoLink.href =
     url;
 
@@ -1830,8 +2037,11 @@ function createIncidentVideo() {
   incidentVideoLink.download =
     "EYVORA_incident_" +
     Date.now() +
-    "." +
-    extension;
+    (
+      type.includes("mp4")
+        ? ".mp4"
+        : ".webm"
+    );
 
 
   incidentVideoLink.style.display =
