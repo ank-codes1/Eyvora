@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EYVORA</title>
 
   <style>
@@ -11,7 +11,7 @@
       color: white;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 30px;
+      padding: 24px;
     }
 
     video {
@@ -19,16 +19,22 @@
       max-width: 95%;
       border-radius: 18px;
       border: 3px solid #38bdf8;
-      margin-top: 20px;
+      margin-top: 18px;
     }
 
     button {
-      margin-top: 20px;
-      padding: 12px 25px;
+      margin: 12px;
+      padding: 12px 24px;
       font-size: 16px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -38,26 +44,127 @@
   <h1>EYVORA</h1>
   <h2>AI Driver Monitoring System</h2>
 
-  <button onclick="startCamera()">Start Camera</button>
+  <button id="startBtn">Start Camera + AI</button>
 
-  <br>
+  <div>
+    <video id="camera" autoplay playsinline></video>
+  </div>
 
-  <video id="camera" autoplay playsinline></video>
+  <div id="status">AI Status: Loading...</div>
 
-  <script>
+  <script type="module">
+
+    import vision from
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
+
+    const {
+      FaceLandmarker,
+      FilesetResolver
+    } = vision;
+
+    const video = document.getElementById("camera");
+    const status = document.getElementById("status");
+    const startBtn = document.getElementById("startBtn");
+
+    let faceLandmarker;
+    let lastVideoTime = -1;
+    let cameraStarted = false;
+
+    async function setupAI() {
+
+      status.innerText = "AI Status: Loading MediaPipe...";
+
+      const filesetResolver =
+        await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+        );
+
+      faceLandmarker =
+        await FaceLandmarker.createFromOptions(
+          filesetResolver,
+          {
+            baseOptions: {
+              modelAssetPath:
+                "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+            },
+
+            runningMode: "VIDEO",
+            numFaces: 1,
+            outputFaceBlendshapes: true
+          }
+        );
+
+      status.innerText = "AI Status: Ready";
+    }
+
     async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+
+      if (!faceLandmarker) {
+        status.innerText = "AI Status: Still loading...";
+        return;
+      }
+
+      const stream =
+        await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false
         });
 
-        document.getElementById("camera").srcObject = stream;
+      video.srcObject = stream;
 
-      } catch (error) {
-        alert("Camera access failed: " + error);
-      }
+      video.addEventListener(
+        "loadeddata",
+        () => {
+          cameraStarted = true;
+          detectLoop();
+        },
+        { once: true }
+      );
     }
+
+    function detectLoop() {
+
+      if (!cameraStarted) return;
+
+      if (
+        video.readyState >= 2 &&
+        video.currentTime !== lastVideoTime
+      ) {
+
+        lastVideoTime = video.currentTime;
+
+        const result =
+          faceLandmarker.detectForVideo(
+            video,
+            performance.now()
+          );
+
+        if (
+          result.faceLandmarks &&
+          result.faceLandmarks.length > 0
+        ) {
+
+          status.innerText =
+            "Driver: FACE DETECTED";
+
+        } else {
+
+          status.innerText =
+            "Driver: NO FACE";
+
+        }
+      }
+
+      requestAnimationFrame(detectLoop);
+    }
+
+    startBtn.addEventListener(
+      "click",
+      startCamera
+    );
+
+    setupAI();
+
   </script>
 
 </body>
