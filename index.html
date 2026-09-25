@@ -238,10 +238,15 @@
     <div class="value" id="riskLevel">SAFE</div>
   </div>
 
-  <div class="card">
-    <small>Sessions</small>
-    <div class="value" id="sessionCount">0</div>
-  </div>
+ <div class="card">
+  <small>GPS Location</small>
+  <div class="value" id="gpsStatus">Not requested</div>
+</div>
+
+<div class="card">
+  <small>Sessions</small>
+  <div class="value" id="sessionCount">0</div>
+</div>
 
 </div>
 
@@ -302,7 +307,10 @@ const calibrateBtn = $("calibrateBtn");
 const profileStatus = $("profileStatus");
 const baselineStatus = $("baselineStatus");
 const sessionCount = $("sessionCount");
+const gpsStatus = $("gpsStatus");
 
+let currentLatitude = null;
+let currentLongitude = null;
 const faceStatus = $("faceStatus");
 const eyeStatus = $("eyeStatus");
 const eyeScore = $("eyeScore");
@@ -671,7 +679,51 @@ async function setupAI() {
 
 setupAI();
 
+function getGPSLocation() {
 
+  if (!navigator.geolocation) {
+    gpsStatus.innerText = "GPS unavailable";
+    return;
+  }
+
+  gpsStatus.innerText = "Getting location...";
+
+  navigator.geolocation.getCurrentPosition(
+
+    position => {
+
+      currentLatitude =
+        position.coords.latitude;
+
+      currentLongitude =
+        position.coords.longitude;
+
+      gpsStatus.innerText =
+        currentLatitude.toFixed(5) +
+        ", " +
+        currentLongitude.toFixed(5);
+
+      logEvent(
+        "GPS",
+        "Driver location obtained"
+      );
+    },
+
+    error => {
+
+      gpsStatus.innerText =
+        "Location denied";
+
+      console.error(error);
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 10000
+    }
+
+  );
+}
 /* START */
 
 async function startEYVORA() {
@@ -738,7 +790,7 @@ async function startEYVORA() {
 
 
     running = true;
-
+getGPSLocation();
 
     startBtn.disabled =
       true;
